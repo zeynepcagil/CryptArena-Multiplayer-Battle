@@ -1,0 +1,15 @@
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\bin\Debug\net8.0\GameClient.exe
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\bin\Debug\net8.0\GameClient.deps.json
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\bin\Debug\net8.0\GameClient.runtimeconfig.json
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\bin\Debug\net8.0\GameClient.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\bin\Debug\net8.0\GameClient.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.AssemblyInfoInputs.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.AssemblyInfo.cs
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.csproj.CoreCompileInputs.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.sourcelink.json
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\refint\GameClient.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\GameClient.genruntimeconfig.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameClient\obj\Debug\net8.0\ref\GameClient.dll

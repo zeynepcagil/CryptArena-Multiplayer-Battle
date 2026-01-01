@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E9D8A168-09B9-4CE2-B19A-B8E18671002B}|GameServer\\GameServer.csproj|C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\gameserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E9D8A168-09B9-4CE2-B19A-B8E18671002B}|GameServer\\GameServer.csproj|solutionrelative:gameserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{6A117B2B-3CF9-4AB4-9A5A-4D883DC37471}|GameClient\\GameClient.csproj|c:\\users\\2eeyn\\onedrive\\belgeler\\compnetwprog\\gameserver\\gameclient\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A117B2B-3CF9-4AB4-9A5A-4D883DC37471}|GameClient\\GameClient.csproj|solutionrelative:gameclient\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E9D8A168-09B9-4CE2-B19A-B8E18671002B}|GameServer\\GameServer.csproj|c:\\users\\2eeyn\\onedrive\\belgeler\\compnetwprog\\gameserver\\gameserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E9D8A168-09B9-4CE2-B19A-B8E18671002B}|GameServer\\GameServer.csproj|solutionrelative:gameserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -30,26 +30,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\GameClient\\Program.cs",
               "RelativeDocumentMoniker": "GameClient\\Program.cs",
               "ToolTip": "C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\GameClient\\Program.cs",
               "RelativeToolTip": "GameClient\\Program.cs",
-              "ViewState": "AgIAALwBAAAAAAAAAAAgwPEBAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAO0AAAAAAAAAAADwvwUBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-24T17:35:30.415Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\GameServer\\Program.cs",
               "RelativeDocumentMoniker": "GameServer\\Program.cs",
               "ToolTip": "C:\\Users\\2eeyn\\OneDrive\\Belgeler\\CompNetwProg\\GameServer\\GameServer\\Program.cs",
               "RelativeToolTip": "GameServer\\Program.cs",
-              "ViewState": "AgIAANQAAAAAAAAAAAAwwOwAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAANUAAAAAAAAAAAAswOwAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-22T22:32:44.099Z",
               "EditorCaption": ""

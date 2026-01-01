@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,491 +7,256 @@ using System.Threading;
 
 namespace GameClient
 {
-    class Enemy
-    {
-        public string Name, Avatar;
-        public int X, Y, HP, MaxHP;
-        public bool IsDead => HP <= 0;
-    }
-
-    struct PlayerClass
-    {
-        public string ClassName, Avatar, ProjectileIcon, Description;
-        public int MaxHP, MaxMana, Damage, ManaCost;
-    }
+    class Enemy { public string Name, Avatar; public int X, Y, HP, MaxHP, Team; public bool IsDead => HP <= 0; }
+    struct PlayerClass { public string Name, Avatar, Proj; public int MHP, MMana, Dmg, Cost; }
 
     class Program
     {
-        private static TcpClient _tcpClient;
-        private static NetworkStream _tcpStream;
-        private static UdpClient _udpClient;
-        private static int _tcpPort = 26000, _udpPort = 26001;
-        private static string _serverIp = "127.0.0.1";
-
-        private static string _myName = "Hero", _myAvatar = "😐", _myProjectile = "🔥";
-        private static int _myX = 15, _myY = 10, _myHP, _myMaxHP, _myMana, _myMaxMana, _myDamage, _manaCost;
-        private static int _manaRegenRate = 5;
+        private static TcpClient _tcp;
+        private static NetworkStream _stream;
+        private static UdpClient _udp;
+        private static int _tPort = 26000, _uPort = 26001;
+        private static string _myName, _myAvatar, _myProj;
+        private static int _myX = 20, _myY = 10, _myHP, _myMaxHP, _myMana, _myMaxMana, _myDmg, _cost, _myTeam;
+        private static int _dX = 1, _dY = 0;
         private static bool _isDead = false;
-        private static int _lastDirX = 1, _lastDirY = 0;
-        private static string _aliveAvatar = "😐";
-
         private static Dictionary<string, Enemy> _enemies = new Dictionary<string, Enemy>();
-        private static readonly object _drawLock = new object();
-        private static readonly object _enemyLock = new object(); // Yeni: Enemy dictionary için ayrı lock
+        private static readonly object _lock = new object();
 
-        private static Dictionary<string, (int X, int Y, int Length)> _lastDrawnPositions = new Dictionary<string, (int, int, int)>();
-
-        private static PlayerClass[] _classes = new PlayerClass[]
-        {
-            new PlayerClass { ClassName="Necromancer", Avatar="🧙", MaxHP=80,  MaxMana=100, Damage=30, ManaCost=20, ProjectileIcon="💀", Description="Yuksek Hasar / Kirilgan" },
-            new PlayerClass { ClassName="Paladin",     Avatar="🛡️", MaxHP=150, MaxMana=60,  Damage=10, ManaCost=10, ProjectileIcon="✨", Description="Tank / Dayanikli" },
-            new PlayerClass { ClassName="Rogue",       Avatar="🥷", MaxHP=100, MaxMana=80,  Damage=15, ManaCost=10, ProjectileIcon="🗡️", Description="Hizli / Dengeli" },
-            new PlayerClass { ClassName="Vampire",     Avatar="🧛", MaxHP=120, MaxMana=90,  Damage=12, ManaCost=15, ProjectileIcon="🩸", Description="Can Calar" }
+        private static PlayerClass[] _classes = {
+            new PlayerClass { Name="Necromancer", Avatar="🧙", MHP=80,  MMana=100, Dmg=30, Cost=20, Proj="💀" },
+            new PlayerClass { Name="Paladin",     Avatar="🛡️", MHP=150, MMana=60,  Dmg=10, Cost=10, Proj="✨" },
+            new PlayerClass { Name="Rogue",       Avatar="🥷", MHP=100, MMana=80,  Dmg=15, Cost=10, Proj="🗡️" },
+            new PlayerClass { Name="Vampire",     Avatar="🧛", MHP=120, MMana=90,  Dmg=12, Cost=15, Proj="🩸" }
         };
 
-        static void Main(string[] args)
+        static void Main()
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.CursorVisible = false;
-            try
-            {
-                Console.SetBufferSize(100, 30);
-                Console.SetWindowSize(100, 30);
-            }
-            catch { }
+            try { Console.SetWindowSize(100, 30); Console.SetBufferSize(100, 30); } catch { }
 
-            ShowLoginScreen();
-            ConnectToServer();
+            Login();
+            Connect();
         }
 
-        private static void ShowLoginScreen()
+        static void Login()
         {
             Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("⚡ CRYPT ARENA: FINAL BATTLE ⚡\n---------------------------------------");
-            Console.ResetColor();
-            Console.Write("Kahraman Adin: ");
-            _myName = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(_myName)) _myName = "Hero" + new Random().Next(100, 999);
+            Console.WriteLine("Adın: "); _myName = Console.ReadLine() ?? "Hero";
+            Console.WriteLine("\nSınıf Seç (1-4):");
+            for (int i = 0; i < 4; i++) Console.WriteLine($"{i + 1}-{_classes[i].Name}");
+            int c = int.TryParse(Console.ReadKey(true).KeyChar.ToString(), out int r) ? r - 1 : 0;
 
-            for (int i = 0; i < _classes.Length; i++)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"[{i + 1}] {_classes[i].Avatar} {_classes[i].ClassName} - {_classes[i].Description}");
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"    HP: {_classes[i].MaxHP} | MP: {_classes[i].MaxMana} | DMG: {_classes[i].Damage}\n");
-            }
+            Console.WriteLine("\n\nTakım Seç:\n[1] Işık İttifakı (Mavi)\n[2] Gölge Birliği (Kırmızı)");
+            _myTeam = Console.ReadKey(true).KeyChar == '2' ? 2 : 1;
 
-            Console.ResetColor();
-            Console.Write("Secimin (1-4): ");
-            char choiceChar = Console.ReadKey(true).KeyChar;
-            int choice = char.IsDigit(choiceChar) ? (int)char.GetNumericValue(choiceChar) - 1 : 2;
-            if (choice < 0 || choice >= 4) choice = 2;
-
-            var s = _classes[choice];
-            _myAvatar = s.Avatar;
-            _aliveAvatar = s.Avatar;
-            _myMaxHP = _myHP = s.MaxHP;
-            _myMaxMana = _myMana = s.MaxMana;
-            _myDamage = s.Damage;
-            _manaCost = s.ManaCost;
-            _myProjectile = s.ProjectileIcon;
-
-            Console.Clear();
-            Console.WriteLine("Sunucuya baglaniliyor...");
+            var s = _classes[c < 0 || c > 3 ? 0 : c];
+            _myAvatar = s.Avatar; _myHP = _myMaxHP = s.MHP;
+            _myMaxMana = _myMana = s.MMana; _myDmg = s.Dmg;
+            _cost = s.Cost; _myProj = s.Proj;
         }
 
-        private static void ConnectToServer()
+        static void Connect()
         {
             try
             {
-                _tcpClient = new TcpClient(_serverIp, _tcpPort);
-                _tcpStream = _tcpClient.GetStream();
-                _udpClient = new UdpClient();
-                _udpClient.Connect(_serverIp, _udpPort);
-
-                new Thread(TcpReceiveLoop) { IsBackground = true }.Start();
-                new Thread(UdpReceiveLoop) { IsBackground = true }.Start();
-                new Thread(ManaRegenLoop) { IsBackground = true }.Start();
-
-                Thread.Sleep(100);
-                SendMyStatusTCP();
-                Thread.Sleep(50);
-                SendUdpData($"MOV:{_myName}|{_myAvatar}|{_myX}|{_myY}");
-
+                _tcp = new TcpClient("127.0.0.1", _tPort); _stream = _tcp.GetStream();
+                _udp = new UdpClient(); _udp.Connect("127.0.0.1", _uPort);
+                new Thread(TcpIn).Start(); new Thread(UdpIn).Start();
+                new Thread(ManaRegen).Start();
                 Console.Clear();
-                DrawUI();
-                MoveLoop();
+
+                // KRİTİK: Karşı tarafın bizi ölü görmemesi için peş peşe yayın
+                SendStatus();
+                Thread.Sleep(100);
+                UpdatePos();
+
+                Loop();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Sunucu hatasi: {ex.Message}");
-                Console.ReadKey();
-            }
+            catch { Console.WriteLine("Sunucu Kapalı!"); Console.ReadKey(); }
         }
 
-        private static void ManaRegenLoop()
+        static void ManaRegen()
         {
             while (true)
             {
                 Thread.Sleep(1000);
-                if (!_isDead && _myMana < _myMaxMana)
-                {
-                    lock (_drawLock)
-                    {
-                        _myMana = Math.Min(_myMana + _manaRegenRate, _myMaxMana);
-                    }
-                    DrawUI();
-                }
+                if (!_isDead && _myMana < _myMaxMana) { lock (_lock) _myMana = Math.Min(_myMana + 5, _myMaxMana); DrawUI(); }
             }
         }
 
-        private static void TcpReceiveLoop()
+        static void TcpIn()
         {
-            byte[] buffer = new byte[4096];
+            byte[] buf = new byte[1024];
             while (true)
             {
                 try
                 {
-                    int n = _tcpStream.Read(buffer, 0, buffer.Length);
+                    int n = _stream.Read(buf, 0, buf.Length);
                     if (n <= 0) break;
-                    string fullMsg = Encoding.UTF8.GetString(buffer, 0, n);
-                    string[] messages = fullMsg.Split(new[] { "STAT:" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var m in messages)
+                    string m = Encoding.UTF8.GetString(buf, 0, n);
+                    if (m.StartsWith("STAT:"))
                     {
-                        if (!string.IsNullOrWhiteSpace(m))
-                            ProcessStatusData("STAT:" + m);
+                        var p = m.Substring(5).Split('|');
+                        lock (_lock)
+                        {
+                            if (!_enemies.ContainsKey(p[0])) _enemies[p[0]] = new Enemy { Name = p[0] };
+                            _enemies[p[0]].HP = int.Parse(p[1]);
+                            _enemies[p[0]].MaxHP = int.Parse(p[2]);
+                        }
+                        DrawGame();
                     }
                 }
                 catch { break; }
             }
         }
 
-        private static void UdpReceiveLoop()
+        static void UdpIn()
         {
             IPEndPoint ep = new IPEndPoint(IPAddress.Any, 0);
             while (true)
             {
                 try
                 {
-                    byte[] d = _udpClient.Receive(ref ep);
+                    byte[] d = _udp.Receive(ref ep);
                     string m = Encoding.UTF8.GetString(d);
-                    if (m.StartsWith("MOV:")) ProcessMoveData(m);
-                    else if (m.StartsWith("ATK:")) ProcessAttackData(m);
+                    if (m.StartsWith("MOV:"))
+                    {
+                        var p = m.Substring(4).Split('|');
+                        if (p[0] == _myName) continue;
+                        lock (_lock)
+                        {
+                            if (!_enemies.ContainsKey(p[0])) _enemies[p[0]] = new Enemy { Name = p[0] };
+                            Put(_enemies[p[0]].X, _enemies[p[0]].Y, "      ");
+                            _enemies[p[0]].Avatar = p[1];
+                            _enemies[p[0]].X = int.Parse(p[2]);
+                            _enemies[p[0]].Y = int.Parse(p[3]);
+                            if (p.Length >= 6) { _enemies[p[0]].HP = int.Parse(p[4]); _enemies[p[0]].MaxHP = int.Parse(p[5]); }
+                            if (p.Length >= 7) _enemies[p[0]].Team = int.Parse(p[6]);
+                        }
+                        DrawGame();
+                    }
+                    else if (m.StartsWith("ATK:"))
+                    {
+                        var p = m.Substring(4).Split('|');
+                        new Thread(() => Projectile(int.Parse(p[0]), int.Parse(p[1]), int.Parse(p[2]), int.Parse(p[3]), int.Parse(p[4]), p[5], int.Parse(p[6]))).Start();
+                    }
                 }
-                catch { break; }
+                catch { }
             }
         }
 
-        private static void ProcessMoveData(string m)
+        static void Loop()
         {
-            try
-            {
-                string[] p = m.Substring(4).Split('|');
-                if (p.Length < 4) return;
-
-                // Kendi adımızı işleme - sadece erken çık
-                if (p[0] == _myName) return;
-
-                lock (_enemyLock) // Düzeltme: Ayrı lock kullanımı
-                {
-                    if (!_enemies.ContainsKey(p[0]))
-                        _enemies[p[0]] = new Enemy { Name = p[0], HP = 100, MaxHP = 100 };
-
-                    var enemy = _enemies[p[0]];
-                    enemy.Avatar = p[1];
-                    enemy.X = int.Parse(p[2]);
-                    enemy.Y = int.Parse(p[3]);
-                }
-
-                lock (_drawLock)
-                {
-                    EraseEnemy(p[0]);
-                    DrawGame();
-                }
-            }
-            catch { }
-        }
-
-        private static void ProcessStatusData(string m)
-        {
-            try
-            {
-                string[] p = m.Substring(5).Split('|');
-                if (p.Length < 3) return;
-
-                // Kendi durumumuzu işleme - sadece erken çık
-                if (p[0] == _myName) return;
-
-                lock (_enemyLock) // Düzeltme: Ayrı lock kullanımı
-                {
-                    if (!_enemies.ContainsKey(p[0]))
-                        _enemies[p[0]] = new Enemy { Name = p[0] };
-
-                    int hp = int.Parse(p[1]);
-                    int maxHp = int.Parse(p[2]);
-
-                    var enemy = _enemies[p[0]];
-                    enemy.HP = hp;
-                    enemy.MaxHP = maxHp;
-
-                    if (hp <= 0 && !enemy.Avatar.Contains("💀") && !enemy.Avatar.Contains("👻"))
-                        enemy.Avatar = "👻";
-                }
-
-                lock (_drawLock)
-                {
-                    DrawGame();
-                }
-            }
-            catch { }
-        }
-
-        private static void ProcessAttackData(string m)
-        {
-            try
-            {
-                string[] p = m.Substring(4).Split('|');
-                if (p.Length >= 6)
-                {
-                    new Thread(() => AnimateProjectile(
-                        int.Parse(p[0]),
-                        int.Parse(p[1]),
-                        int.Parse(p[2]),
-                        int.Parse(p[3]),
-                        false,
-                        int.Parse(p[4]),
-                        p[5]
-                    ))
-                    { IsBackground = true }.Start();
-                }
-            }
-            catch { }
-        }
-
-        private static void MoveLoop()
-        {
+            DrawGame();
             while (true)
             {
                 if (Console.KeyAvailable)
                 {
                     var k = Console.ReadKey(true).Key;
-
-                    if (_isDead)
+                    lock (_lock) Put(_myX, _myY, "  ");
+                    bool mv = false;
+                    if (k == ConsoleKey.W && _myY > 3) { _myY--; _dX = 0; _dY = -1; mv = true; }
+                    else if (k == ConsoleKey.S && _myY < 28) { _myY++; _dX = 0; _dY = 1; mv = true; }
+                    else if (k == ConsoleKey.A && _myX > 2) { _myX--; _dX = -1; _dY = 0; mv = true; }
+                    else if (k == ConsoleKey.D && _myX < 80) { _myX++; _dX = 1; _dY = 0; mv = true; }
+                    else if (k == ConsoleKey.Spacebar && !_isDead && _myMana >= _cost)
                     {
-                        int oldX = _myX, oldY = _myY;
-                        bool moved = false;
-
-                        if (k == ConsoleKey.W && _myY > 3) { _myY--; moved = true; }
-                        else if (k == ConsoleKey.S && _myY < 28) { _myY++; moved = true; }
-                        else if (k == ConsoleKey.A && _myX > 2) { _myX--; moved = true; }
-                        else if (k == ConsoleKey.D && _myX < 80) { _myX++; moved = true; }
-
-                        if (moved)
-                        {
-                            lock (_drawLock)
-                            {
-                                ClearPosition(oldX, oldY, _myName.Length + 3);
-                                DrawGame();
-                            }
-                            SendUdpData($"MOV:{_myName}|{_myAvatar}|{_myX}|{_myY}");
-                        }
+                        lock (_lock) _myMana -= _cost; DrawUI();
+                        new Thread(() => Projectile(_myX + _dX, _myY + _dY, _dX, _dY, _myDmg, _myProj, _myTeam)).Start();
+                        SendUdp($"ATK:{_myX + _dX}|{_myY + _dY}|{_dX}|{_dY}|{_myDmg}|{_myProj}|{_myTeam}");
                     }
-                    else
-                    {
-                        int oldX = _myX, oldY = _myY;
-                        bool moved = false;
-
-                        if (k == ConsoleKey.W && _myY > 3) { _myY--; _lastDirX = 0; _lastDirY = -1; moved = true; }
-                        else if (k == ConsoleKey.S && _myY < 28) { _myY++; _lastDirX = 0; _lastDirY = 1; moved = true; }
-                        else if (k == ConsoleKey.A && _myX > 2) { _myX--; _lastDirX = -1; _lastDirY = 0; moved = true; }
-                        else if (k == ConsoleKey.D && _myX < 80) { _myX++; _lastDirX = 1; _lastDirY = 0; moved = true; }
-                        else if (k == ConsoleKey.Spacebar) TryAttack();
-
-                        if (moved)
-                        {
-                            lock (_drawLock)
-                            {
-                                ClearPosition(oldX, oldY, _myName.Length + 3);
-                                DrawGame();
-                            }
-                            SendUdpData($"MOV:{_myName}|{_myAvatar}|{_myX}|{_myY}");
-                        }
-                    }
+                    if (mv) UpdatePos();
+                    DrawGame();
                 }
                 Thread.Sleep(30);
             }
         }
 
-        private static void TryAttack()
+        static void Projectile(int x, int y, int dx, int dy, int dmg, string ic, int shooterTeam)
         {
-            if (_isDead) return;
+            int range = (dx != 0) ? 30 : 15;
+            int sleepTime = (dx != 0) ? 35 : 65;
 
-            if (_myMana >= _manaCost)
+            for (int i = 0; i < range; i++)
             {
-                lock (_drawLock) { _myMana -= _manaCost; }
-                DrawUI();
-                int sx = _myX + _lastDirX, sy = _myY + _lastDirY;
-                new Thread(() => AnimateProjectile(sx, sy, _lastDirX, _lastDirY, true, 0, _myProjectile)) { IsBackground = true }.Start();
-                SendUdpData($"ATK:{sx}|{sy}|{_lastDirX}|{_lastDirY}|{_myDamage}|{_myProjectile}");
-            }
-        }
+                if (x < 1 || x > 95 || y < 3 || y > 29) break;
+                if (shooterTeam != _myTeam && x == _myX && y == _myY && !_isDead) { Hit(dmg); break; }
 
-        private static void AnimateProjectile(int x, int y, int dx, int dy, bool mine, int dmg, string icon)
-        {
-            for (int i = 0; i < 15; i++)
-            {
-                if (x < 1 || x > 95 || y < 3 || y > 28) break;
-                if (!mine && x == _myX && y == _myY && !_isDead) { TakeDamage(dmg); break; }
+                Put(x, y, ic, ConsoleColor.Yellow);
+                Thread.Sleep(sleepTime);
 
-                lock (_drawLock)
+                lock (_lock)
                 {
-                    Console.SetCursorPosition(x, y);
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Write(icon);
-                }
-
-                Thread.Sleep(50);
-
-                lock (_drawLock)
-                {
-                    ClearPosition(x, y, 3);
-                    DrawGame();
-                }
-
-                x += dx;
-                y += dy;
-            }
-        }
-
-        private static void TakeDamage(int d)
-        {
-            if (_isDead) return;
-
-            lock (_drawLock)
-            {
-                _myHP = Math.Max(0, _myHP - d);
-                if (_myHP <= 0)
-                {
-                    _isDead = true;
-                    _myAvatar = "👻";
-                }
-            }
-
-            SendMyStatusTCP();
-            DrawGame();
-        }
-
-        static void DrawGame()
-        {
-            lock (_drawLock)
-            {
-                DrawUI();
-
-                // Önce tüm eski pozisyonları temizle
-                foreach (var kvp in _lastDrawnPositions.ToArray())
-                {
-                    if (kvp.Key == _myName)
+                    if (y == _myY && (x == _myX || x == _myX + 1 || x == _myX - 1))
                     {
-                        if (kvp.Value.X != _myX || kvp.Value.Y != _myY)
-                            ClearPosition(kvp.Value.X, kvp.Value.Y, kvp.Value.Length);
+                        Put(_myX, _myY, _myAvatar, _isDead ? ConsoleColor.DarkGray : (_myTeam == 1 ? ConsoleColor.Cyan : ConsoleColor.Red));
                     }
                     else
                     {
-                        lock (_enemyLock)
+                        bool restored = false;
+                        foreach (var e in _enemies.Values)
                         {
-                            if (_enemies.ContainsKey(kvp.Key))
+                            if (y == e.Y && (x == e.X || x == e.X + 1))
                             {
-                                var e = _enemies[kvp.Key];
-                                if (kvp.Value.X != e.X || kvp.Value.Y != e.Y)
-                                    ClearPosition(kvp.Value.X, kvp.Value.Y, kvp.Value.Length);
+                                Put(e.X, e.Y, e.Avatar, e.Team == 1 ? ConsoleColor.Cyan : ConsoleColor.Red);
+                                restored = true; break;
                             }
                         }
+                        if (!restored) Put(x, y, "  ");
                     }
                 }
-
-                // Kendi karakterini çiz (avatar + isim)
-                Console.SetCursorPosition(_myX, _myY);
-                Console.ForegroundColor = _isDead ? ConsoleColor.DarkGray : ConsoleColor.Cyan;
-                string myDisplay = $"{_myAvatar} {_myName}";
-                Console.Write(myDisplay);
-                _lastDrawnPositions[_myName] = (_myX, _myY, myDisplay.Length);
-
-                // Düşmanları çiz
-                lock (_enemyLock)
-                {
-                    foreach (var e in _enemies.Values)
-                    {
-                        if (e.X < 1 || e.Y < 3) continue;
-                        Console.SetCursorPosition(e.X, e.Y);
-
-                        string displayText;
-                        if (e.IsDead)
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            displayText = $"👻 {e.Name}: OLDU";
-                            Console.Write(displayText);
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            displayText = $"{e.Avatar} {e.Name}: {e.HP}";
-                            Console.Write(displayText);
-                        }
-
-                        _lastDrawnPositions[e.Name] = (e.X, e.Y, displayText.Length);
-                    }
-                }
+                x += dx; y += dy;
             }
+            DrawGame();
+        }
+
+        static void Hit(int d)
+        {
+            lock (_lock) { _myHP = Math.Max(0, _myHP - d); if (_myHP <= 0) { _isDead = true; _myAvatar = "👻"; } }
+            SendStatus(); UpdatePos(); DrawGame();
+        }
+
+        static void Put(int x, int y, string s, ConsoleColor c = ConsoleColor.White)
+        {
+            if (x < 0 || y < 0 || x >= 100 || y >= 30) return;
+            lock (_lock) { Console.SetCursorPosition(x, y); Console.ForegroundColor = c; Console.Write(s); }
         }
 
         static void DrawUI()
         {
-            Console.SetCursorPosition(0, 0);
-            if (_isDead)
+            lock (_lock)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write($"[ OLDUN - IZLEYICI MODU ] ADIN: {_myName} (Hareket: WASD) ".PadRight(95));
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.Write($"HP: {_myHP}/{_myMaxHP} | MP: {_myMana}/{_myMaxMana} | ADIN: {_myName} ".PadRight(95));
-            }
-            Console.SetCursorPosition(0, 1);
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(new string('-', 95));
-        }
-
-        static void EraseEnemy(string name)
-        {
-            if (_lastDrawnPositions.ContainsKey(name))
-            {
-                var pos = _lastDrawnPositions[name];
-                ClearPosition(pos.X, pos.Y, pos.Length);
+                Console.SetCursorPosition(0, 0);
+                Console.ForegroundColor = _myTeam == 1 ? ConsoleColor.Cyan : ConsoleColor.Red;
+                string tName = _myTeam == 1 ? "LIGHT" : "SHADOW";
+                Console.Write($"[{tName}] HP: {_myHP}/{_myMaxHP} | MP: {_myMana}/{_myMaxMana} | ADIN: {_myName}   ".PadRight(95));
+                Console.SetCursorPosition(0, 1); Console.ForegroundColor = ConsoleColor.Gray;
+                Console.Write(new string('-', 95));
             }
         }
 
-        static void ClearPosition(int x, int y, int length)
+        static void DrawGame()
         {
-            if (x >= 0 && x < 100 && y >= 0 && y < 30)
+            DrawUI();
+            lock (_lock)
             {
-                Console.SetCursorPosition(x, y);
-                Console.Write(new string(' ', Math.Min(length + 5, 95 - x)));
+                foreach (var e in _enemies.Values)
+                {
+                    if (e.X < 1 || e.Y < 3) continue;
+                    Console.SetCursorPosition(e.X, e.Y);
+                    if (e.IsDead) { Console.ForegroundColor = ConsoleColor.DarkGray; Console.Write($"💀{e.Name}"); }
+                    else { Console.ForegroundColor = e.Team == 1 ? ConsoleColor.Cyan : ConsoleColor.Red; Console.Write($"{e.Avatar}{e.HP}"); }
+                }
+                Console.SetCursorPosition(_myX, _myY);
+                Console.ForegroundColor = _isDead ? ConsoleColor.DarkGray : (_myTeam == 1 ? ConsoleColor.Cyan : ConsoleColor.Red);
+                Console.Write(_myAvatar);
             }
         }
 
-        private static void SendUdpData(string m)
-        {
-            byte[] d = Encoding.UTF8.GetBytes(m);
-            try { _udpClient.Send(d, d.Length); } catch { }
-        }
-
-        private static void SendMyStatusTCP()
-        {
-            string m = $"STAT:{_myName}|{_myHP}|{_myMaxHP}";
-            byte[] d = Encoding.UTF8.GetBytes(m);
-            try { _tcpStream.Write(d, 0, d.Length); _tcpStream.Flush(); } catch { }
-        }
+        static void UpdatePos() { SendUdp($"MOV:{_myName}|{_myAvatar}|{_myX}|{_myY}|{_myHP}|{_myMaxHP}|{_myTeam}"); }
+        static void SendStatus() { byte[] d = Encoding.UTF8.GetBytes($"STAT:{_myName}|{_myHP}|{_myMaxHP}"); try { _stream.Write(d, 0, d.Length); } catch { } }
+        static void SendUdp(string m) { byte[] d = Encoding.UTF8.GetBytes(m); try { _udp.Send(d, d.Length); } catch { } }
     }
 }
