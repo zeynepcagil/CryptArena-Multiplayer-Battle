@@ -1,0 +1,12 @@
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\bin\Debug\net8.0\GameCommon.deps.json
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\bin\Debug\net8.0\GameCommon.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\bin\Debug\net8.0\GameCommon.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.AssemblyInfoInputs.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.AssemblyInfo.cs
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.csproj.CoreCompileInputs.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.sourcelink.json
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\refint\GameCommon.dll
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\GameCommon.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\CryptArena\GameCommon\obj\Debug\net8.0\ref\GameCommon.dll

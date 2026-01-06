@@ -6,3 +6,7 @@ C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\Ga
 C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\GameServer.exe
 C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\GameServer.pdb
 C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\GameServer.exe.config
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Debug\GameServer.exe.manifest
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Debug\GameServer.application
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\GameServer.exe.manifest
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Debug\GameServer.application

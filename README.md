@@ -1,192 +1,254 @@
-# ⚔️ CRYPT ARENA: Mythic Hybrid Battleground
+# 🎮 Crypt Battle Arena  
+*(Emoji Battle Royale + Cafeteria Food Fight Hybrid)*
 
-**CRYPT ARENA** is a terminal-based (CLI), real-time multiplayer battle arena game developed using **C#** and **.NET Socket libraries**.  
-The project implements a **Hybrid Networking Architecture**, combining **TCP** and **UDP** protocols to deliver both **data integrity** and **high-performance gameplay** simultaneously.
+## 📌 Project Overview
 
-- **Course:** Network Programming  
-- **Status:** Final Release (Completed)
+This project is a **text-based multiplayer real-time arena game** developed for the **Network Programming** course.  
+It is a **hybrid implementation** inspired by:
+
+- **Project 1: Emoji Battle Royale**
+- **Project 6: Cafeteria Food Fight Simulator**
+
+The game combines **real-time emoji-based combat** with **projectile mechanics, team battles, and power-ups**, demonstrating the effective use of **TCP and UDP socket programming** for different networking requirements.
 
 ---
 
-## 🚀 Technical Architecture & Implementation Details
+## 🎯 Core Concept
 
-This project is built upon a **Hybrid Network Model** to fully satisfy and exceed the course requirements.
+- Players control emoji characters in a shared arena
+- Two teams: **Light (💙)** and **Shadow (❤️)**
+- Real-time movement and combat
+- Projectile-based attacks
+- Limited attack resources using a **Mana-based Ammo Limitation system**
+- The team with the highest total HP at the end of the round wins
 
 ---
 
-## 🌐 1. Hybrid Networking Model
+## 🔫 Ammo Limitation System (Mana-Based)
 
-### 🔒 TCP (Transmission Control Protocol)
-**Usage:**  
-Used for critical data that requires guaranteed delivery and order.
+Instead of traditional ammunition, this project uses **Mana** as an **ammo limitation mechanic**:
 
-**Implementation:**  
+- Each attack consumes **mana**
+- Players cannot attack when mana is insufficient
+- Mana regenerates automatically over time
+- This enforces:
+  - Resource management
+  - Tactical decision-making
+  - Balanced combat pacing
+
+This design fulfills the **ammo limitation requirement** of *Project 6* while remaining suitable for a text-based real-time game.
+
+---
+
+## 🌐 Network Architecture
+
+### 🧠 TCP – Reliable Communication
+
+TCP is used for **critical and reliable operations** where packet loss is unacceptable.
+
+**Used for:**
+- Player status synchronization (HP updates)
+- Lobby system (ready state, host control)
+- Game start commands
+- Reliable state updates
+
+**Technologies:**
 - `TcpListener`
 - `TcpClient`
-
-**Data Handling:**  
-- `StreamReader`
-- `StreamWriter`  
-(Secure, text-based data stream processing)
-
-**Key Functions:**  
-- Lobby authentication  
-- "Ready" state synchronization (`CMD:READY`)  
-- Health (HP) updates  
-- Win/Lose condition broadcasts  
+- `NetworkStream`
+- Multithreaded client handling
 
 ---
+### ⚡ UDP – Real-Time Communication
 
-### ⚡ UDP (User Datagram Protocol)
-**Usage:**  
-Used for high-frequency, real-time data where speed is prioritized over reliability.
+UDP is used for **fast-paced, real-time gameplay** where performance is prioritized over guaranteed delivery.
 
-**Implementation:**  
+**Used for:**
+- Player movement updates
+- Projectile broadcasting
+- Item spawn and destruction events
+- Game timer synchronization
+- Arena state updates
+
+Because UDP is **connectionless**, the server does not receive an explicit
+disconnect event when a client closes.
+
+To address this, a **server-side heartbeat and timeout mechanism** was implemented:
+
+- Each movement update refreshes the player's "last seen" timestamp
+- Players inactive for more than **5 seconds** are considered disconnected
+- Disconnected players are:
+  - Removed from the server player registry
+  - Removed from the lobby list
+  - Logged on the server console
+- If the disconnected player was the **host**, host authority is reassigned automatically
+
+This ensures a **consistent and authoritative lobby state**.
+**Technologies:**
 - `UdpClient`
-- Broadcasting techniques
-
-**Key Functions:**  
-- Low-latency Player Movement (X/Y coordinates)  
-- Projectile & Combat tracking  
-
----
-
-## 🔒 2. Thread Safety & Concurrency
-
-### 🧵 Multi-threading
-The server runs dedicated threads for:
-- Client acceptance & management  
-- Main **Game Loop** (tick rate)  
-- **Item Spawner** system  
-
-### 🔐 Concurrency Control
-To prevent **race conditions** and server crashes, all access to shared resources (such as `Dictionary<_players>` and `List<_items>`) is protected using the `lock` mechanism.
-
-This guarantees **absolute thread safety** during simultaneous read/write operations.
+- UDP broadcasting
+- Heartbeat and timeout mechanism for disconnect detection
 
 ---
 
 ## 🎮 Gameplay Features
 
-### ⚔️ Faction & Class System
+### ✅ Implemented Core Features
 
-#### Two Opposing Teams
-- 🔵 **Alliance of Light** — Spawns on the left side of the arena  
-- 🔴 **Legion of Shadow** — Spawns on the right side of the arena  
-
-#### Character Classes
-
-| Class        | Icon | Role / Stats        | Projectile |
-|--------------|------|---------------------|------------|
-| Necromancer  | 🧙   | High Mana, DPS      | 💀         |
-| Paladin      | 🛡️   | High HP (Tank)      | ✨         |
-| Rogue        | 🥷   | Balanced, Agile     | 🗡️         |
-| Vampire      | 🧛   | Balanced            | 🩸         |
-
----
-
-### 🍷 Dynamic Item System (Item Spawner)
-
-- **Server-Side Authority:**  
-  The server runs an autonomous thread that spawns a **Health Potion (🍷)** every **20 seconds** at a random, valid (non-wall) coordinate.
-
-- **Collection Logic:**  
-  When a player moves over a potion, they gain **+20 HP**.
-
-- **Synchronization:**  
-  Upon collection, the server broadcasts an `ITEM:DESTROY` packet to all clients to remove the item visually, ensuring full game state consistency.
+- Emoji-based player characters
+- Real-time multiplayer arena
+- Lobby system with host control
+- Team-based combat (2 teams)
+- Projectile attack system
+- Mana-based ammo limitation
+- Health & mana HUD
+- Power-up items (healing)
+- Round timer
+- Win/lose determination
+- Automatic round reset
 
 ---
 
-## ⏱️ Game Loop Mechanics
+## 🧵 Multithreading
 
-### 🧩 Lobby Phase
-- Players connect via **TCP**
-- Select class and team
-- Toggle **READY** state using the `R` key
+The project uses **multiple threads** to manage:
 
-### ⚔️ Battle Phase
-- Host starts the match
-- A **60-second timer** begins
-- Movement and combat are enabled
+- TCP client connections
+- UDP message listening
+- Game timer loop
+- Mana regeneration
+- Item spawning
 
-### 🏆 Victory Conditions
-- **Sudden Death:**  
-  If a team is wiped out, the game ends immediately.
-- **Time Limit:**  
-  When the timer reaches zero, the team with the **highest total HP** wins.
+Thread safety is ensured using `lock` mechanisms where shared state is accessed.Additional synchronization mechanisms were added on the server side to ensure
+thread-safe access to shared player and connection state.
 
-### 🔄 Auto-Reset
-- The server automatically resets:
-  - HP
-  - Mana
-  - Player positions  
-- Reset occurs **5 seconds after match end**
-- Players are returned to the lobby
 
 ---
 
-## 👻 Spectator (Ghost) Mode
 
-- Eliminated players are **not disconnected**
-- They transform into **Ghosts (👻)**
-- Ghosts can freely roam the arena to spectate
-- No interaction with living players or items
+## 🛠 Technologies & Requirements
 
----
+- **Language:** C#
+- **Framework:** .NET 8.0
+- **Application Type:** Multi-threaded Console Application
 
-## 🖥️ Visual & Control Enhancements
-
-### ✨ Anti-Flicker Engine
-Instead of clearing the entire console using `Console.Clear()`, the client uses a **smart rendering algorithm** that only updates changed pixels, resulting in smooth visuals.
-
-### 🎯 Speed Normalization
-Due to the aspect ratio of terminal characters:
-- Horizontal movement: **2 units**
-- Vertical movement: **1 unit**
-
-This creates visually balanced movement speed.
-
----
-## 🕹️ How to Start the Game
-
-### 1️⃣ Server Initialization
-Wait for the **"SERVER ONLINE"** message.
+**Networking APIs used:**
+- `TcpListener`
+- `TcpClient`
+- `UdpClient`
+- `NetworkStream`
 
 ---
 
-### 2️⃣ Start the Host Client
-Run the following file:
+## ▶️ How to Run
 
-**GameClient.exe**
+### Prerequisites
+- Ensure **[.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)** is installed.   
 
-Then select:  
-**[1] HOST**
+### 1️⃣ Start the Server
+```bash
+dotnet run --project GameServer
+```
+
+### 2️⃣ Start Clients
+
+**Option A: Using Terminal (Dev Mode)**
+Open new terminal windows (one for each player) and run:
+
+```bash
+dotnet run --project GameClient
+```
+--- OR (Recommended for cleaner Gameplay) ---
+
+**Option B: Using Executable (.exe)**
+
+Navigate to the build folder: GameClient \ bin \ Debug \ net8.0
+
+Double-click GameClient.exe to launch. (You can open multiple instances for multiplayer testing)
+
+
+## ▶️ Client Steps
+1. Enter username  
+2. Select class  
+3. Choose team  
+4. Press **R** to ready up  
+
+The **host** starts the game by pressing **ENTER**.
 
 ---
 
-### 3️⃣ Connect Other Players
-Run the following file on other machines:
+## 🧪 Testing Scenarios
 
-**GameClient.exe**
-
-Then select:  
-**[2] JOIN**
-
-Enter the Host's IP Address  
-*(example: `192.168.1.XX`)*
-
-> ℹ️ **Note:** If you are running the game on the same computer as the host, you can skip entering the IP address by simply pressing **ENTER**.
+- Minimum **3 simultaneous clients** tested
+- Player disconnection handling via **server-side timeout mechanism**
+- Automatic removal of disconnected players from lobby
+- Host reassignment when the original host disconnects
+- Server restart scenarios
+- Real-time synchronization under **UDP packet loss**
+- Invalid and late client handling
 
 ---
 
-### 4️⃣ Play
-- All players press **R** to toggle **READY**
-- Host presses **ENTER** to start the match
+## ⚠️ Known Limitations
+
+- TCP communication uses `NetworkStream` directly instead of `StreamReader` / `StreamWriter`  
+- No persistent player data between sessions  
+- Console rendering depends on terminal size  
+- UDP disconnects are inferred via timeout rather than explicit events
+
+
+These choices were made to prioritize **performance**, **simplicity**, and **clarity**.
 
 ---
 
-## ⚔️ Welcome to the Crypt Arena
+## 🤖 AI Tool Usage
 
-**Choose your side.**  
-**Dominate the battleground.**
+AI-assisted tools were used strictly as **learning, review, and debugging aids**,
+in full compliance with the course AI usage policy.
+
+No complete project, class, or system was generated automatically.
+All design decisions and implementations were made by the developer.
+
+### Usage Policy Compliance
+
+All AI-generated suggestions were:
+- Carefully reviewed and evaluated
+- Manually implemented by the developer
+- Tested within the application
+- Fully understood before integration
+
+AI tools were not used to generate full solutions or replace independent problem-solving.
+
+### Tools Used
+
+**ChatGPT**
+- Clarifying TCP vs UDP design decisions  
+- Reviewing multithreading and synchronization logic  
+- Debugging network communication issues  
+
+**Google Gemini**
+- Exploring alternative architectural approaches  
+- Validating client-server responsibility separation  
+
+**Claude**
+- Improving code readability suggestions  
+- Reviewing documentation clarity and structure  
+
+All AI-generated suggestions were:
+- Carefully reviewed  
+- Manually implemented  
+- Tested within the application  
+- Fully understood by the developer  
+
+No complete project or class was generated automatically.
+
+---
+
+## 🏁 Conclusion
+
+This project demonstrates:
+
+- Practical usage of **TCP and UDP**
+- Real-time multiplayer synchronization
+- **Mana-based ammo limitation** mechanics
+- Creative **hybrid game design**

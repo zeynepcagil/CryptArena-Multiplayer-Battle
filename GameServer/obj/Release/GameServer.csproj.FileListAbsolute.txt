@@ -1,0 +1,12 @@
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Release\GameServer.exe.config
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Release\GameServer.exe.manifest
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Release\GameServer.application
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Release\GameServer.exe
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\bin\Release\GameServer.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.csproj.AssemblyReference.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.csproj.CoreCompileInputs.cache
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.exe.manifest
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.application
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.exe
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.pdb
+C:\Users\2eeyn\OneDrive\Belgeler\CompNetwProg\GameServer\GameServer\obj\Release\GameServer.exe.config
